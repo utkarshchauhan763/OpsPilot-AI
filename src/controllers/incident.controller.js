@@ -143,4 +143,36 @@ async function updateIncident(req, res, next) {
         return next(error);
     }
 }
-module.exports = { createIncident, getIncidents, updateIncident };
+
+
+async function deleteIncident(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid incident ID",
+      });
+    }
+
+    const incident = await Incident.findByIdAndDelete(id);
+
+    if (!incident) {
+      return res.status(404).json({
+        success: false,
+        message: "Incident not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Incident deleted successfully",
+      data: incident,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { createIncident, getIncidents, updateIncident, deleteIncident };

@@ -1,4 +1,5 @@
 const Incident = require("../models/incident.model");
+const buildIncidentFilter = require("../utils/incident-filter");
 async function createIncident(req,res,next) {
     try{
         const {
@@ -21,7 +22,7 @@ async function createIncident(req,res,next) {
         return res.status(201).json({
             success: true,
             message: "Incident created successfully",
-            data: Incident,
+            data: incident,
         });
 
     }
@@ -40,18 +41,26 @@ async function createIncident(req,res,next) {
 }
 
 async function getIncidents(req,res,next){
-    try{
-        const incidents = await Incident.find().sort({
-            createdAt: -1,
-        });
-        return res.status(200).json({
-            success: true,
-            count: incidents.length,
-            data: incidents,
+   try{
+    const result = buildIncidentFilter(req.query);
+    if(result.error){
+        return res.status(400).json({
+            success: false,
+            message: result.error,
         });
     }
-    catch(error){
-        return next(error);
-    }
+
+    const incidents = await Incident.find(result.filter).sort({
+        createdAt: -1,
+    });
+
+    return res.status(200).json({
+        success: true,
+        count: incidents.length,
+        data: incidents,
+    });
+   }catch(error){
+    return next(error);
+   }
 }
 module.exports = { createIncident, getIncidents };

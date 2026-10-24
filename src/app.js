@@ -1,6 +1,7 @@
 const express = require("express");
 const healthRoutes = require("./routes/health.routes");
 const errorHandler = require("./middleware/error.middleware");
+const incidentRoutes = require("./routes/incidents.routes");
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.get("/", (req,res) => {
     });
 });
 app.use("/health",healthRoutes);
+app.use("/incidents",incidentRoutes);
 app.use((req,res)=>{
     res.status(404).json({
         success: false,
@@ -20,6 +22,8 @@ app.use((req,res)=>{
     });
 
 });
+
+
 
 app.use(errorHandler);
 

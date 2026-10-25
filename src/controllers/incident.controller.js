@@ -2,8 +2,9 @@
 const Incident = require("../models/incident.model");
 const buildIncidentFilter = require("../utils/incident-filter");
 const buildPagination = require("../utils/pagination");
-const { analyzeIncident } = require("../services/ai.service");
-const createAnalyzeIncidentHandler = require("./incident-ai.handler");
+const createQueuedAnalysisHandler = require("./incident-ai-queue.handler");
+const createAIAnalysisQueueService = require("../services/ai-analysis-queue.service");
+const createAIAnalysisStatusHandler = require("./ai-analysis-status.handler");
 // Create a new incident
 async function createIncident(req, res, next) {
   try {
@@ -207,9 +208,27 @@ async function deleteIncident(req, res, next) {
 }
 
 // Analyze an incident using the local Ollama model
-const analyzeIncidentById = createAnalyzeIncidentHandler({
-    findIncidentById: (id) => Incident.findById(id),
-    analyzeIncident,
+
+/**
+ * Queue AI incident analysis for background processing.
+ */
+
+const queueAdapter = {
+  add: (...args) =>
+    require("../queues/ai-analysis.queue").add(...args),
+};
+
+const enqueueAIAnalysis =
+  createAIAnalysisQueueService(queueAdapter);
+
+const analyzeIncidentById = createQueuedAnalysisHandler({
+  findIncidentById: (id) => Incident.findById(id),
+  enqueueAIAnalysis,
+});
+
+
+const getAIAnalysisJobStatus = createAIAnalysisStatusHandler({
+  getJobById: (jobId) => require("../queues/ai-analysis.queue").getJob(jobId),
 });
 
 module.exports = {
@@ -218,4 +237,5 @@ module.exports = {
   updateIncident,
   deleteIncident,
   analyzeIncidentById,
+  getAIAnalysisJobStatus,
 };

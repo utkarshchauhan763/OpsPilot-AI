@@ -1,37 +1,27 @@
-const express = require("express");
-const app = express();
-const healthRoutes = require("./routes/health.routes");
-const errorHandler = require("./middleware/error.middleware");
-app.use(express.json({limit: "10kb"})); // it reduce the risk of clients sending unncessarily large payloads.
+const app = require("./app");
+const connectDB = require("./config/database");
 const PORT = process.env.PORT || 5000;
 
-app.get("/",(req,res)=>{
-    res.status(200).json({
-        success: true,
-        message: "OpsPilot AI server is running",
-    });
-});
+let server; 
 
-app.use("/health",healthRoutes);
+async function startServer(){
+    try{
+        await connectDB();
 
-app.use((req,res)=>{
-    res.status(404).json({
-        success: false,
-        message: `Route ${req.method} ${req.originalUrl} not found`,
-    });
-});
+        server = app.listen(PORT, ()=>{
+            console.log(`OpsPilot AI server is running on port ${PORT}`);
+        });
 
-
-
-app.use(errorHandler);
-
-const server = app.listen(PORT,()=>{
-    console.log(`OpsPilot AI server is running on port ${PORT}`);
-});
+    }catch(error){
+        console.error("Failed to start OpsPilot AI:", error.message);
+        process.exitCode = 1;
+    }
+}
 
 function shutdown(signal){
     console.log(`${signal} received. Shutting down server...`);
-    server.close(()=>{
+    server.close(async ()=>{
+        await mongoose.disconnect();
         console.log("OpsPilot AI server closed successfully.");
         process.exit(0);
     });
@@ -39,3 +29,5 @@ function shutdown(signal){
 
 process.on("SIGINT",()=>shutdown("SIGINT"));
 process.on("SIGTERM",()=>shutdown("SIGTERM"));
+
+startServer();

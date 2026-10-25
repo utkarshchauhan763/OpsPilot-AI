@@ -45,6 +45,36 @@ const incidentSchema = new mongoose.Schema(
       default: "manual",
       required: true,
     },
+
+    aiAnalysis: {
+      status: {
+        type: String,
+        enum: ["pending", "completed", "failed"],
+        default: null,
+      },
+
+      model: {
+        type: String,
+        default: null,
+      },
+      result: {
+        type: String,
+        default: null,
+      },
+      error: {
+        type: String,
+        default: null,
+      },
+      completedAt: {
+        type: Date,
+        default: null,
+      },
+      jobId: {
+        type: String,
+        default: null,
+      },
+
+    },
   },
   {
     timestamps: true,
